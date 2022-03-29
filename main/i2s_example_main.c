@@ -32,43 +32,46 @@
 
 static const char* TAG = "i2s_example";
 
-static void setup_triangle_sine_waves(int bits)
+static void setup_waves()
 {
-    int *samples_data = malloc(((bits+8)/16)*SAMPLE_PER_CYCLE*4);
+    size_t buf_size = sizeof(uint16_t) * SAMPLE_PER_CYCLE * 2;
+    uint16_t *samples_data = malloc(buf_size);
     unsigned int i, sample_val;
-    double sin_float, triangle_float, triangle_step = (double) pow(2, bits) / SAMPLE_PER_CYCLE;
+    double sin_float;
+    // double sin_float, triangle_float, triangle_step = (double) pow(2, bits) / SAMPLE_PER_CYCLE;
     size_t i2s_bytes_write = 0;
 
-    printf("\r\nTest bits=%d free mem=%d, written data=%d\n", bits, esp_get_free_heap_size(), ((bits+8)/16)*SAMPLE_PER_CYCLE*4);
+    printf("\r\nTest bits=%d free mem=%d, written data=%d\n", 16, esp_get_free_heap_size(), buf_size);
 
-    triangle_float = -(pow(2, bits)/2 - 1);
+    // triangle_float = -(pow(2, bits)/2 - 1);
 
     for(i = 0; i < SAMPLE_PER_CYCLE; i++) {
-        sin_float = sin(i * 2 * PI / SAMPLE_PER_CYCLE);
-        if(sin_float >= 0)
-            triangle_float += triangle_step;
-        else
-            triangle_float -= triangle_step;
+        sin_float = (sin(i * 2 * PI / SAMPLE_PER_CYCLE) + 1.0) * 0.5;
+        // if(sin_float >= 0)
+        //     triangle_float += triangle_step;
+        // else
+        //     triangle_float -= triangle_step;
 
-        sin_float *= (pow(2, bits)/2 - 1);
+        sin_float *= 255.0;
+        samples_data[i*2] = samples_data[i*2+1] = (uint16_t)sin_float << 8;
 
-        if (bits == 16) {
-            sample_val = 0;
-            sample_val += (short)triangle_float;
-            sample_val = sample_val << 16;
-            sample_val += (short) sin_float;
-            samples_data[i] = sample_val;
-        } else if (bits == 24) { //1-bytes unused
-            samples_data[i*2] = ((int) triangle_float) << 8;
-            samples_data[i*2 + 1] = ((int) sin_float) << 8;
-        } else {
-            samples_data[i*2] = ((int) triangle_float);
-            samples_data[i*2 + 1] = ((int) sin_float);
-        }
+        // if (bits == 16) {
+        //     sample_val = 0;
+        //     sample_val += (short)triangle_float;
+        //     sample_val = sample_val << 16;
+        //     sample_val += (short) sin_float;
+        //     samples_data[i] = sample_val;
+        // } else if (bits == 24) { //1-bytes unused
+        //     samples_data[i*2] = ((int) triangle_float) << 8;
+        //     samples_data[i*2 + 1] = ((int) sin_float) << 8;
+        // } else {
+        //     samples_data[i*2] = ((int) triangle_float);
+        //     samples_data[i*2 + 1] = ((int) sin_float);
+        // }
 
     }
-    ESP_LOGI(TAG, "set clock");
-    i2s_set_clk(I2S_NUM, SAMPLE_RATE, bits, 2);
+    // ESP_LOGI(TAG, "set clock");
+    // i2s_set_clk(I2S_NUM, SAMPLE_RATE, bits, 2);
     //Using push
     // for(i = 0; i < SAMPLE_PER_CYCLE; i++) {
     //     if (bits == 16)
@@ -78,7 +81,8 @@ static void setup_triangle_sine_waves(int bits)
     // }
     // or write
     ESP_LOGI(TAG, "write data");
-    i2s_write(I2S_NUM, samples_data, ((bits+8)/16)*SAMPLE_PER_CYCLE*4, &i2s_bytes_write, 100);
+    i2s_write(I2S_NUM, samples_data, buf_size, &i2s_bytes_write, 100);
+    ESP_LOGI(TAG, "written bytes: %d", i2s_bytes_write);
 
     free(samples_data);
 }
@@ -104,12 +108,9 @@ void app_main(void)
     i2s_driver_install(I2S_NUM, &i2s_config, 0, NULL);
     i2s_set_pin(I2S_NUM, NULL);
 
-    int test_bits = 16;
+    setup_waves();
+
     while (1) {
-        setup_triangle_sine_waves(test_bits);
         vTaskDelay(5000/portTICK_PERIOD_MS);
-        test_bits += 8;
-        if(test_bits > 32)
-            test_bits = 16;
     }
 }

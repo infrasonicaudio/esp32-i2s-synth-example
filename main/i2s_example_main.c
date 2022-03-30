@@ -24,9 +24,8 @@
 #define DMA_NUM_BUF     (2)
 #define I2S_NUM         (0)
 #define WAVE_FREQ_HZ    (235)
-#define PI              (3.14159265)
 #define TWOPI           (6.28318531)
-#define PHASE_INC       (2.0 * PI * WAVE_FREQ_HZ / SAMPLE_RATE)
+#define PHASE_INC       (TWOPI * WAVE_FREQ_HZ / SAMPLE_RATE)
 
 static const char* TAG = "i2s_synth_example";
 

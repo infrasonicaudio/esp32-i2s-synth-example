@@ -4,7 +4,12 @@
 # I2S real-time synthesis example
 
 This example sets up a task to generate real-time synthesized audio (a sine wave of arbitrary frequency)
-and output via I2S using the internal 8-bit DACs on the ESP32
+and output via I2S using the internal 8-bit DACs on the ESP32.
+
+The example code uses a 32-sample, 2ch buffer size for minimal latency, with only 2 DMA buffers.
+The expectation is that the CPU is able to keep up with producing a new 32 sample buffer while
+DMA is transmitting the other buffer to I2S. You can change these values to increase available
+time to run DSP while trading off for latency. [Good overview here](https://blog.atomic14.com/2021/04/20/esp32-i2s-dma-buf-len-buf-count.html).
 
 ## How to Use Example
 

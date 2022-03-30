@@ -1,7 +1,7 @@
 | Supported Targets | ESP32 |
 | ----------------- | ----- |
 
-# I2S Real-time synth example
+# I2S real-time synthesis example
 
 This example sets up a task to generate real-time synthesized audio (a sine wave of arbitrary frequency)
 and output via I2S using the internal 8-bit DACs on the ESP32

@@ -19,6 +19,9 @@ and output via I2S using the internal 8-bit DACs on the ESP32
 idf.py menuconfig
 ```
 
+An `sdkconfig.defaults` file is provided for convenience. The only changes beyond system
+defaults are to increase the CPU Frequency to 240 MHz and max out the RTOS tick rate at 1000Hz.
+
 ### Build and Flash
 
 Build the project and flash it to the board, then run monitor tool to view serial output:

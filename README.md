@@ -19,7 +19,7 @@ time to run DSP while trading off for latency. [Good overview here](https://blog
 * A USB cable for power supply and programming
 * Some way to connect the DAC pins to line-level inputs (mixer or audio interface)
 
-⚠️ Not recommended to connect headphones to the DAC pins. At best they probably will not work, 
+⚠️ Not recommended to connect headphones directly to the DAC pins. At best they probably will not work, 
 since the internal DAC cannot drive enough current through them, at worst it could burn out the DACs.
 
 ### Configure the Project

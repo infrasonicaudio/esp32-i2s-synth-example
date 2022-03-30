@@ -19,76 +19,65 @@
 #include <math.h>
 
 #define SAMPLE_RATE     (44100)
-#define DMA_BUF_LEN     (256)
+#define DMA_BUF_LEN     (32)
 #define DMA_NUM_BUF     (2)
 #define I2S_NUM         (0)
-#define WAVE_FREQ_HZ    (440)
+#define WAVE_FREQ_HZ    (235)
 #define PI              (3.14159265)
+#define TWOPI           (6.28318531)
 #define PHASE_INC       (2.0 * PI * WAVE_FREQ_HZ / SAMPLE_RATE)
 
-// #define SAMPLE_PER_CYCLE (SAMPLE_RATE/WAVE_FREQ_HZ)
+static const char* TAG = "i2s_synth_example";
 
-static const char* TAG = "i2s_example";
-
-// static void setup_waves()
-// {
-//     size_t buf_size = sizeof(uint16_t) * SAMPLE_PER_CYCLE * 2;
-//     uint16_t *samples_data = malloc(buf_size);
-//     unsigned int i, sample_val;
-//     double sin_float;
-//     size_t i2s_bytes_write = 0;
-
-//     printf("\r\nTest bits=%d free mem=%d, written data=%d\n", 16, esp_get_free_heap_size(), buf_size);
-
-//     // triangle_float = -(pow(2, bits)/2 - 1);
-
-//     for(i = 0; i < SAMPLE_PER_CYCLE; i++) {
-//         sin_float = (sin(i * 2 * PI / SAMPLE_PER_CYCLE) + 1.0) * 0.5;
-//         sin_float *= 255.0;
-//         samples_data[i*2] = samples_data[i*2+1] = (uint16_t)sin_float << 8;
-//     }
-
-//     ESP_LOGI(TAG, "write data");
-//     i2s_write(I2S_NUM, samples_data, buf_size, &i2s_bytes_write, 100);
-//     ESP_LOGI(TAG, "written bytes: %d", i2s_bytes_write);
-
-//     free(samples_data);
-// }
-
+// Accumulated phase
 static float p = 0.0;
-static int count = 0;
+
+// Output buffer (2ch interleaved)
 static uint16_t out_buf[DMA_BUF_LEN * 2];
 
+// Fill the output buffer and write to I2S DMA
 static void write_buffer()
 {
     float samp = 0.0;
     size_t bytes_written;
 
     for (int i=0; i < DMA_BUF_LEN; i++) {
+        // Scale 0-1 for internal DAC
         samp = (sinf(p) + 1.0) * 0.5;
+
+        // Increment and wrap phase
         p += PHASE_INC;
-        if (p >= 2.0*PI)
-            p -= 2.0*PI;
+        if (p >= TWOPI)
+            p -= TWOPI;
         
+        // Scale to 8-bit integer range
         samp *= 255.0;
+
+        // Shift to MSB of 16-bit int for intenrnal DAC
         out_buf[i*2] = out_buf[i*2+1] = (uint16_t)samp << 8;
     }
 
+    // Write with max delay. We want to push buffers as fast as we
+    // can into DMA memory. If DMA memory isn't transmitted yet this
+    // will yield the task until the interrupt fires when DMA buffer has 
+    // space again. If we aren't keeping up with the real-time deadline,
+    // audio will glitch and the task will completely consume the CPU,
+    // not allowing any task switching interrupts to be processed.
     i2s_write(I2S_NUM, out_buf, sizeof(out_buf), &bytes_written, portMAX_DELAY);
+
+    // You could put a taskYIELD() here to ensure other tasks always have a chance to run.
+    // taskYIELD();
 }
 
-static void audio_task(void *user)
+static void audio_task(void *userData)
 {
-    while(1) write_buffer();
+    while(1) {
+        write_buffer();
+    }
 }
 
 void app_main(void)
 {
-    //for 36Khz sample rates, we create 100Hz sine wave, every cycle need 36000/100 = 360 samples (4-bytes or 8-bytes each sample)
-    //depend on bits_per_sample
-    //using 6 buffers, we need 60-samples per buffer
-    //if 2-channels, 16-bit each channel, total buffer is 360*4 = 1440 bytes
-    //if 2-channels, 24/32-bit each channel, total buffer is 360*8 = 2880 bytes
     i2s_config_t i2s_config = {
         .mode = I2S_MODE_MASTER | I2S_MODE_TX | I2S_MODE_DAC_BUILT_IN,
         .sample_rate = SAMPLE_RATE,
@@ -98,14 +87,13 @@ void app_main(void)
         .dma_buf_count = DMA_NUM_BUF,
         .dma_buf_len = DMA_BUF_LEN,
         .use_apll = false,
-        .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1                                //Interrupt level 1
+        .intr_alloc_flags = ESP_INTR_FLAG_LEVEL2
     };
+
     i2s_driver_install(I2S_NUM, &i2s_config, 0, NULL);
-    i2s_set_pin(I2S_NUM, NULL);
 
-    xTaskCreate(audio_task, "audio", 4096, NULL, configMAX_PRIORITIES - 1, NULL);
+    i2s_set_pin(I2S_NUM, NULL); // Internal DAC
 
-    while (1) {
-        vTaskDelay(5000/portTICK_PERIOD_MS);
-    }
+    // Highest possible priority for realtime audio task
+    xTaskCreate(audio_task, "audio", 1024, NULL, configMAX_PRIORITIES - 1, NULL);
 }

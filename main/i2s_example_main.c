@@ -1,7 +1,7 @@
 /* I2S Synthesis example
 
     This example code will output a sine wave of arbitrary frequency WAVE_FREQ_HZ
-    (default 235Hz) at 44100kHz sample rate to the internal 8-bit DAC channels of
+    (default 235 Hz) at 44100 Hz sample rate to the internal 8-bit DAC channels of
     the ESP32.
 
     This example code is in the Public Domain (or CC0 licensed, at your option.)

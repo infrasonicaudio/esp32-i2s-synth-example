@@ -42,7 +42,8 @@ static void write_buffer()
     size_t bytes_written;
 
     for (int i=0; i < DMA_BUF_LEN; i++) {
-        // Scale 0-1 for internal DAC
+        // Scale sine sample to 0-1 for internal DAC
+        // (can't output negative voltage)
         samp = (sinf(p) + 1.0) * 0.5;
 
         // Increment and wrap phase
@@ -53,7 +54,7 @@ static void write_buffer()
         // Scale to 8-bit integer range
         samp *= 255.0;
 
-        // Shift to MSB of 16-bit int for intenrnal DAC
+        // Shift to MSB of 16-bit int for internal DAC
         out_buf[i*2] = out_buf[i*2+1] = (uint16_t)samp << 8;
     }
 

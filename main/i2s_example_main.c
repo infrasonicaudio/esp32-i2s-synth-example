@@ -1,7 +1,8 @@
-/* I2S Example
+/* I2S Synthesis example
 
-    This example code will output 100Hz sine wave and triangle wave to 2-channel of I2S driver
-    Every 5 seconds, it will change bits_per_sample [16, 24, 32] for i2s data
+    This example code will output a sine wave of arbitrary frequency WAVE_FREQ_HZ
+    (default 235Hz) at 44100kHz sample rate to the internal 8-bit DAC channels of
+    the ESP32.
 
     This example code is in the Public Domain (or CC0 licensed, at your option.)
 

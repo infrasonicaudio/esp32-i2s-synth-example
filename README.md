@@ -17,6 +17,10 @@ time to run DSP while trading off for latency. [Good overview here](https://blog
 
 * A development board with ESP32 SoC (e.g., ESP32-DevKitC, ESP-WROVER-KIT, etc.)
 * A USB cable for power supply and programming
+* Some way to connect the DAC pins to line-level inputs (mixer or audio interface)
+
+⚠️ Not recommended to connect headphones to the DAC pins. At best they probably will not work, 
+since the internal DAC cannot drive enough current through them, at worst it could burn out the DACs.
 
 ### Configure the Project
 
@@ -44,6 +48,3 @@ See the Getting Started Guide for full steps to configure and use ESP-IDF to bui
 You should see some information about the I2S clocks logged to the console. A sine wave
 will be produced on the internal DAC pins of the ESP32. You can listen to the output
 by wiring the DAC pins to a line-level audio input, e.g. on an audio interface or mixer.
-
-Not recommended to use headphones. At best they probably will not work as the internal 
-DAC cannot drive enough current through them, at worst it could burn out the DACs.

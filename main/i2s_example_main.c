@@ -23,14 +23,14 @@
 #define DMA_BUF_LEN     (32)
 #define DMA_NUM_BUF     (2)
 #define I2S_NUM         (0)
-#define WAVE_FREQ_HZ    (235)
-#define TWOPI           (6.28318531)
+#define WAVE_FREQ_HZ    (235.0f)
+#define TWOPI           (6.28318531f)
 #define PHASE_INC       (TWOPI * WAVE_FREQ_HZ / SAMPLE_RATE)
 
 static const char* TAG = "i2s_synth_example";
 
 // Accumulated phase
-static float p = 0.0;
+static float p = 0.0f;
 
 // Output buffer (2ch interleaved)
 static uint16_t out_buf[DMA_BUF_LEN * 2];
@@ -38,13 +38,13 @@ static uint16_t out_buf[DMA_BUF_LEN * 2];
 // Fill the output buffer and write to I2S DMA
 static void write_buffer()
 {
-    float samp = 0.0;
+    float samp = 0.0f;
     size_t bytes_written;
 
     for (int i=0; i < DMA_BUF_LEN; i++) {
         // Scale sine sample to 0-1 for internal DAC
         // (can't output negative voltage)
-        samp = (sinf(p) + 1.0) * 0.5;
+        samp = (sinf(p) + 1.0f) * 0.5f;
 
         // Increment and wrap phase
         p += PHASE_INC;
@@ -52,7 +52,7 @@ static void write_buffer()
             p -= TWOPI;
         
         // Scale to 8-bit integer range
-        samp *= 255.0;
+        samp *= 255.0f;
 
         // Shift to MSB of 16-bit int for internal DAC
         out_buf[i*2] = out_buf[i*2+1] = (uint16_t)samp << 8;
